@@ -29,6 +29,12 @@ After validation you can use standard Web3 API and smart contracts to proceed wi
 payment, etc.
 
 
+## References
+
+[DID Schemas](https://github.com/perma-id/w3id.org)
+
+
+
 ## More on metamask snaps
 
 

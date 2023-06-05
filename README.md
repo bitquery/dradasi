@@ -1,4 +1,36 @@
-# @metamask/template-snap-monorepo
+# DRADASI
+
+Extention to Metamask allowing to manage your identity and present them
+for verification to third parties.
+
+## Usage
+
+Person can connect Metamask with [DIDs](https://godid.com/) it has issued and
+present them to third parties, as:
+
+- ecommerce web sites ( such as presenting driving license to rent a cat)
+- governments ( request visa based on your DID passport )
+- any organisation ( univerisity to present your diplomas )
+
+## How to use
+
+1. install this snap to Metamask
+2. connect your DIDs to your account
+3. when web site asks for identity, select which identity you need and proceed
+
+## How to integrate
+
+Use Snap API for
+
+1. request DID
+2. validate DID
+
+After validation you can use standard Web3 API and smart contracts to proceed with
+payment, etc.
+
+
+## More on metamask snaps
+
 
 This repository demonstrates how to develop a snap with TypeScript. For detailed instructions, see [the MetaMask documentation](https://docs.metamask.io/guide/snaps.html#serving-a-snap-to-your-local-environment).
 

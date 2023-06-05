@@ -1,8 +1,9 @@
-import { ComponentProps } from 'react';
+import {ComponentProps, useContext} from 'react';
 import styled from 'styled-components';
-import { MetamaskState } from '../hooks';
+import {MetaMaskContext, MetamaskState} from '../hooks';
 import { ReactComponent as FlaskFox } from '../assets/flask_fox.svg';
-import { shouldDisplayReconnectButton } from '../utils';
+import { callContractMethod, shouldDisplayReconnectButton } from '../utils';
+
 
 const Link = styled.a`
   display: flex;
@@ -38,6 +39,7 @@ const Button = styled.button`
   align-items: center;
   justify-content: center;
   margin-top: auto;
+
   ${({ theme }) => theme.mediaQueries.small} {
     width: 100%;
   }
@@ -123,4 +125,21 @@ export const HeaderButtons = ({
       <ButtonText>Connected</ButtonText>
     </ConnectedContainer>
   );
+};
+
+export const CallSCButton = (props: ComponentProps<typeof Button>) => {
+  const [state, _] = useContext(MetaMaskContext);
+
+  return (
+    <Button
+      {...props}
+      onClick={() => callContractMethod(state.nftID, state.data)}
+    >
+      Pay
+    </Button>
+  );
+};
+
+export const SetIDButton = (props: ComponentProps<typeof Button>) => {
+  return <Button {...props}>Set ID</Button>;
 };

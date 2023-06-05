@@ -1,18 +1,13 @@
 import { useContext } from 'react';
 import styled from 'styled-components';
 import { MetamaskActions, MetaMaskContext } from '../hooks';
+import { connectSnap, getSnap, shouldDisplayReconnectButton } from '../utils';
 import {
-  connectSnap,
-  getSnap,
-  sendHello,
-  shouldDisplayReconnectButton,
-} from '../utils';
-import {
-  ConnectButton,
-  InstallFlaskButton,
-  ReconnectButton,
-  SendHelloButton,
+  CallSCButton,
   Card,
+  ConnectButton, HeaderButtons,
+  InstallFlaskButton,
+  ReconnectButton, SetIDButton,
 } from '../components';
 
 const Container = styled.div`
@@ -22,6 +17,7 @@ const Container = styled.div`
   flex: 1;
   margin-top: 7.6rem;
   margin-bottom: 7.6rem;
+
   ${({ theme }) => theme.mediaQueries.small} {
     padding-left: 2.4rem;
     padding-right: 2.4rem;
@@ -46,6 +42,7 @@ const Subtitle = styled.p`
   font-weight: 500;
   margin-top: 0;
   margin-bottom: 0;
+
   ${({ theme }) => theme.mediaQueries.small} {
     font-size: ${({ theme }) => theme.fontSizes.text};
   }
@@ -75,6 +72,7 @@ const Notice = styled.div`
   & > * {
     margin: 0;
   }
+
   ${({ theme }) => theme.mediaQueries.small} {
     margin-top: 1.2rem;
     padding: 1.6rem;
@@ -91,6 +89,7 @@ const ErrorMessage = styled.div`
   margin-top: 2.4rem;
   max-width: 60rem;
   width: 100%;
+
   ${({ theme }) => theme.mediaQueries.small} {
     padding: 1.6rem;
     margin-bottom: 1.2rem;
@@ -117,13 +116,9 @@ const Index = () => {
     }
   };
 
-  const handleSendHelloClick = async () => {
-    try {
-      await sendHello();
-    } catch (e) {
-      console.error(e);
-      dispatch({ type: MetamaskActions.SetError, payload: e });
-    }
+  const handleSetIDClick = async () => {
+    dispatch({ type: MetamaskActions.SetNFTID, payload: BigInt(124) });
+    dispatch({ type: MetamaskActions.SetData, payload: '0xbb' });
   };
 
   return (
@@ -164,6 +159,7 @@ const Index = () => {
                 />
               ),
             }}
+            fullWidth
             disabled={!state.isFlask}
           />
         )}
@@ -180,27 +176,30 @@ const Index = () => {
                 />
               ),
             }}
+            fullWidth
             disabled={!state.installedSnap}
           />
         )}
         <Card
           content={{
-            title: 'Send Hello message',
-            description:
-              'Display a custom message within a confirmation screen in MetaMask.',
+            title: 'Set NFT ID',
+            description: '',
             button: (
-              <SendHelloButton
-                onClick={handleSendHelloClick}
+              <SetIDButton
                 disabled={!state.installedSnap}
+                onClick={handleSetIDClick}
               />
             ),
           }}
           disabled={!state.installedSnap}
-          fullWidth={
-            state.isFlask &&
-            Boolean(state.installedSnap) &&
-            !shouldDisplayReconnectButton(state.installedSnap)
-          }
+        />
+        <Card
+          content={{
+            title: 'Pay',
+            description: 'Pay for rental.',
+            button: <CallSCButton disabled={!state.installedSnap} />,
+          }}
+          disabled={!state.installedSnap}
         />
         <Notice>
           <p>

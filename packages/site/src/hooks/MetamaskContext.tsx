@@ -6,18 +6,22 @@ import {
   useEffect,
   useReducer,
 } from 'react';
-import { Snap } from '../types';
-import { isFlask, getSnap } from '../utils';
+import {Snap} from '../types';
+import {isFlask, getSnap} from '../utils';
 
 export type MetamaskState = {
   isFlask: boolean;
   installedSnap?: Snap;
   error?: Error;
+  nftID?: bigint;
+  data?: string; // binary data, starting with 0x
 };
 
 const initialState: MetamaskState = {
   isFlask: false,
   error: undefined,
+  nftID: undefined,
+  data: undefined,
 };
 
 type MetamaskDispatch = { type: MetamaskActions; payload: any };
@@ -35,6 +39,8 @@ export enum MetamaskActions {
   SetInstalled = 'SetInstalled',
   SetFlaskDetected = 'SetFlaskDetected',
   SetError = 'SetError',
+  SetNFTID = 'SetNFTID',
+  SetData = 'SetData',
 }
 
 const reducer: Reducer<MetamaskState, MetamaskDispatch> = (state, action) => {
@@ -57,6 +63,18 @@ const reducer: Reducer<MetamaskState, MetamaskDispatch> = (state, action) => {
         error: action.payload,
       };
 
+    case MetamaskActions.SetNFTID:
+      return {
+        ...state,
+        nftID: action.payload,
+      };
+
+    case MetamaskActions.SetData:
+      return {
+        ...state,
+        data: action.payload,
+      };
+
     default:
       return state;
   }
@@ -69,7 +87,7 @@ const reducer: Reducer<MetamaskState, MetamaskDispatch> = (state, action) => {
  * @param props.children - React component to be wrapped by the Provider.
  * @returns JSX.
  */
-export const MetaMaskProvider = ({ children }: { children: ReactNode }) => {
+export const MetaMaskProvider = ({children}: { children: ReactNode }) => {
   if (typeof window === 'undefined') {
     return <>{children}</>;
   }

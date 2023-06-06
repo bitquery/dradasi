@@ -11,6 +11,7 @@ import {
 } from 'did-jwt-vc';
 import { MetaMaskContext, MetamaskActions } from '../hooks/MetamaskContext';
 import { getDid, saveDid } from '../utils/snap';
+import { signAndVerify } from '../utils/signAndVerify';
 
 const Police = () => {
   const [state, dispatch] = useContext(MetaMaskContext);
@@ -22,6 +23,20 @@ const Police = () => {
   const handleIssueDID = async () => {
     try {
       const address = state.accounts[0] as string;
+
+      const ok = await signAndVerify(address, 'Another random message');
+      if (!ok) {
+        dispatch({
+          type: MetamaskActions.SetError,
+          payload: 'Address verification failed',
+        });
+        return;
+      }
+      console.log(`Congrats, address: ${address} verified!`);
+      dispatch({
+        type: MetamaskActions.SetAddressVerified,
+        payload: { [address]: true },
+      });
 
       const issuer = new EthrDID({
         identifier: '0xf1232f840f3ad7d23fcdaa84d6c66dac24efb198',

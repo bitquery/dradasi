@@ -7,9 +7,10 @@ import {
   useEffect,
   useReducer,
 } from 'react';
-import {Snap} from '../types';
-import {isFlask, getSnap} from '../utils';
 import detectEthereumProvider from '@metamask/detect-provider';
+import { Snap } from '../types';
+import { isFlask, getSnap } from '../utils';
+import { signAndVerify } from '../utils/signAndVerify';
 
 export type MetamaskState = {
   isFlask: boolean;
@@ -22,7 +23,7 @@ export type MetamaskState = {
   hasProvider: boolean;
   connecting: boolean;
   connectMetamask: () => Promise<void>;
-  addressVerified: boolean;
+  addressVerified: { [key: string]: boolean };
 };
 
 const initialState: MetamaskState = {
@@ -35,7 +36,7 @@ const initialState: MetamaskState = {
   hasProvider: false,
   connecting: false,
   connectMetamask: async () => {},
-  addressVerified: false,
+  addressVerified: {},
 };
 
 type MetamaskDispatch = { type: MetamaskActions; payload: any };
@@ -115,7 +116,7 @@ const reducer: Reducer<MetamaskState, MetamaskDispatch> = (state, action) => {
     case MetamaskActions.SetAddressVerified:
       return {
         ...state,
-        addressVerified: action.payload,
+        addressVerified: { ...state.addressVerified, ...action.payload },
       };
 
     default:
@@ -130,7 +131,7 @@ const reducer: Reducer<MetamaskState, MetamaskDispatch> = (state, action) => {
  * @param props.children - React component to be wrapped by the Provider.
  * @returns JSX.
  */
-export const MetaMaskProvider = ({children}: { children: ReactNode }) => {
+export const MetaMaskProvider = ({ children }: { children: ReactNode }) => {
   if (typeof window === 'undefined') {
     return <>{children}</>;
   }

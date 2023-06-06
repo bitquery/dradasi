@@ -1,21 +1,24 @@
 import { useContext, useEffect, useState } from 'react';
-import { MetaMaskContext, MetamaskActions } from '../hooks/MetamaskContext';
-import { getDid, saveDid } from '../utils/snap';
 import { EthrDID } from 'ethr-did';
+import { Resolver } from 'did-resolver';
+import { getResolver } from 'ethr-did-resolver';
 import {
   Issuer,
   JwtCredentialPayload,
   createVerifiableCredentialJwt,
   JwtPresentationPayload,
   createVerifiablePresentationJwt,
-  verifyCredential,
-  verifyPresentation,
 } from 'did-jwt-vc';
+import { MetaMaskContext, MetamaskActions } from '../hooks/MetamaskContext';
+import { getDid, saveDid } from '../utils/snap';
 
 const Police = () => {
   const [state, dispatch] = useContext(MetaMaskContext);
-  const [did, setDid] = useState<unknown | null>(null);
+  const [did, setDid] = useState<string | null>(null);
 
+  /**
+   *
+   */
   const handleIssueDID = async () => {
     try {
       const address = state.accounts[0] as string;
@@ -52,29 +55,14 @@ const Police = () => {
       };
 
       const vpJwt = await createVerifiablePresentationJwt(vpPayload, issuer);
-      console.log(vcJwt);
-
-      const b = { [state.accounts[0]]: vpJwt };
-      const newDids = (await saveDid(b)) as Record<string, any>;
-      console.log('newSaveDids', newDids);
+      const d = { [state.accounts[0]]: vpJwt };
+      const newDids = (await saveDid(d)) as Record<string, string>;
+      setDid(newDids[state.accounts[0]]);
     } catch (e) {
       console.error(e);
       dispatch({ type: MetamaskActions.SetError, payload: e });
     }
   };
-
-  useEffect(() => {
-    (async () => {
-      if (state.installedSnap) {
-        const loadedDid = (await getDid(state.accounts[0])) as Record<
-          string,
-          unknown
-        >;
-        setDid(loadedDid);
-        console.log(loadedDid);
-      }
-    })();
-  }, [state.installedSnap]);
 
   return (
     <>
@@ -83,6 +71,18 @@ const Police = () => {
           <h1 className="text-body-emphasis">
             Issue Your Digital Driving License
           </h1>
+          {did ? (
+            <h2>
+              Driver Licencse DID issued ✅:
+              <pre>
+                <code>
+                  <>{did}</>
+                </code>
+              </pre>
+            </h2>
+          ) : (
+            <></>
+          )}
           <p className="fs-5 col-md-8">
             Issue your personal driving license as{' '}
             <a href="https://www.w3.org/TR/did-core/">
@@ -97,13 +97,11 @@ const Police = () => {
 
           <div className="mb-5">
             <button
-              disabled={did !== null || !state.isConnected}
-              onClick={() => handleIssueDID()}
+              // disabled={!state.isConnected}
+              onClick={async () => await handleIssueDID()}
               className="btn btn-primary btn-lg px-4"
             >
-              {did === null
-                ? 'Issue DID for Driving license'
-                : 'Did already issued'}
+              Issue DID for Driving license
             </button>
           </div>
 

@@ -7,11 +7,11 @@ import {
   createVerifiableCredentialJwt,
   JwtPresentationPayload,
   createVerifiablePresentationJwt,
-  verifyCredential,
   verifyPresentation,
 } from 'did-jwt-vc';
 import { Resolver } from 'did-resolver';
 import { getResolver } from 'ethr-did-resolver';
+import { ethers } from 'ethers';
 import { MetamaskActions, MetaMaskContext } from '../hooks';
 import {
   clearDids,
@@ -31,6 +31,12 @@ import {
   ReconnectButton,
   SetIDButton,
 } from '../components';
+import {
+  signAndVerify,
+  signMessage,
+  verifyMessage,
+} from '../utils/signAndVerify';
+import { generateRandomBigInt } from '../utils/rand';
 
 const Container = styled.div`
   display: flex;
@@ -212,7 +218,7 @@ const Index = () => {
    * Verifiers jwt and handlers rent process. In non-hackaton world this would be moved
    * probably to some backend.
    *
-   * @param jwt DID JWT provided by user.
+   * @param jwt - DID JWT provided by user.
    * @returns void
    */
   const handleRent = (jwt: string) => async () => {
@@ -247,20 +253,49 @@ const Index = () => {
     // const verifiedVC = await verifyCredential(vcJwt, resolver);
     const verifiedVP = await verifyPresentation(jwt, resolver);
     console.log(verifiedVP.verified);
-    function generateRandomBigInt(length: number): bigint {
-      const byteLength = Math.ceil(length / 8); // Convert bits to bytes
-      const randomBytes = new Uint8Array(byteLength);
-      crypto.getRandomValues(randomBytes);
-      const hexString = Array.from(randomBytes)
-        .map((byte) => byte.toString(16).padStart(2, '0'))
-        .join('');
-      return BigInt(`0x${hexString}`);
+    console.log(verifiedVP);
+
+    const credentialId: string | undefined =
+      verifiedVP.verifiablePresentation.verifiableCredential?.[0]
+        .credentialSubject.id;
+
+    if (!credentialId) {
+      dispatch({
+        type: MetamaskActions.SetError,
+        payload: 'There is no credentialId in the provided DID',
+      });
+      return;
     }
+
+    const regex = /^did:ethr:(\w+)$/u; // Regular expression to match the desired format
+    const match = credentialId.match(regex);
+
+    if (match && match[1]) {
+      console.log(match[1]); // Output: 0xF1232F840f3aD7d23FcDaA84d6C66dac24EFb198
+    } else {
+      dispatch({
+        type: MetamaskActions.SetError,
+        payload: 'did:ethr:0x.. format is not valid',
+      });
+      return;
+    }
+
+    const addr = match[1];
+    const message = 'Random message';
+    const ok = await signAndVerify(addr, message);
+    if (!ok) {
+      dispatch({
+        type: MetamaskActions.SetError,
+        payload: 'Address verification failed',
+      });
+      return;
+    }
+    console.log('Congrats, address verified!');
+    dispatch({ type: MetamaskActions.SetAddressVerified, payload: true });
 
     const randomBigInt = generateRandomBigInt(256); // Generate a random 256-bit BigInt
     dispatch({ type: MetamaskActions.SetNFTID, payload: BigInt(randomBigInt) });
   };
-
 
   return (
     <Container>
@@ -271,7 +306,7 @@ const Index = () => {
       <CardContainer>
         {state.error && (
           <ErrorMessage>
-            <b>An error happened:</b> {state.error.message}
+            <b>An error happened:</b> {state.error.message || state.error}
           </ErrorMessage>
         )}
         {!state.isFlask && (
@@ -367,7 +402,7 @@ const Index = () => {
             description: 'Pay for rental.',
             button: <CallSCButton disabled={!state.installedSnap} />,
           }}
-          disabled={!state.installedSnap}
+          disabled={!state.addressVerified}
         />
         <Notice>
           <p>

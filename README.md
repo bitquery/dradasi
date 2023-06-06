@@ -3,6 +3,22 @@
 Extention to Metamask allowing to manage your identity and present them
 for verification to third parties.
 
+## Install and run demo
+
+```bash
+
+yarn install
+
+yarn start
+
+```
+
+Install Metamask Flask
+
+Go to http://localhost:8000/police to issue DID
+
+Then to http://localhost:8000/rent to use DID
+
 ## Usage
 
 Use Metamask to store your [decentralised idenitites, DIDs](https://godid.com/).

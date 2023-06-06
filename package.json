@@ -48,6 +48,8 @@
     "node": ">=16.0.0"
   },
   "dependencies": {
-    "ethers": "5.7.2"
+    "did-jwt-vc": "^3.2.2",
+    "ethers": "5.7.2",
+    "ethr-did": "^2.3.13"
   }
 }

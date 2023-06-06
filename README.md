@@ -5,12 +5,10 @@ for verification to third parties.
 
 ## Usage
 
-Person can connect Metamask with [DIDs](https://godid.com/) it has issued and
-present them to third parties, as:
+Use Metamask to store your [decentralised idenitites, DIDs](https://godid.com/).
 
-- ecommerce web sites ( such as presenting driving license to rent a cat)
-- governments ( request visa based on your DID passport )
-- any organisation ( univerisity to present your diplomas )
+You can use Metamask to prove your identity to independent organisations, as descfibed below.
+
 
 ## How to use
 
@@ -23,13 +21,44 @@ present them to third parties, as:
 Use Snap API for
 
 1. request DID
-2. validate DID
+2. verify DID
 
-After validation you can use standard Web3 API and smart contracts to proceed with
+After verification you can use standard Web3 API and smart contracts to proceed with
 payment, etc.
+
+## Applications
+
+Person can connect Metamask with [DIDs](https://godid.com/) it has issued and
+present them to third parties, as:
+
+- ecommerce web sites ( such as presenting driving license to rent a cat)
+- governments ( request visa based on your DID passport )
+- any organisation ( univerisity to present your diplomas )
+
+Issuers of DIDs are organisations, example of valuable DIDs are:
+
+- Driving license
+- Passport
+- Diploma
+- Experience Certificates
+- CVs
+- KYC certificates
+
+DIDs are named decentralised, as they allow to retrive, validate and verify the document without
+having to ask a centralised registry or verifier. That's why they are usefull to present documents
+cross-border to independent parties.
+
+With this Metamask extension (so called 'snap') you can keep your identites in a secured storage of
+Metamask and provide them by demand to the web applications, that request them.
+Applications can then validate and verify these identities, using DID resolver / verifier, as well as
+Metamask cryptography functions to check the signature validity using person private key.
+
 
 
 ## References
+
+
+[DID JWT Validator Credentials and Presentations](https://github.com/decentralized-identity/did-jwt-vc)
 
 [DID Resolver](https://dev.uniresolver.io/)
 

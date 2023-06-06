@@ -12,6 +12,7 @@ import { Logo } from '../components';
 const Rent = () => {
   const [state, dispatch] = useContext(MetaMaskContext);
   const [notification, setNotification] = useState('');
+  const [license, setLicense] = useState<unknown | null>(null);
 
   /**
    * Verifiers jwt and handlers rent process. In non-hackaton world this would be moved
@@ -95,6 +96,8 @@ const Rent = () => {
         });
         return;
       }
+
+      setLicense(verifiedVP.verifiablePresentation.verifiableCredential);
       console.log('Congrats, address verified!');
       dispatch({ type: MetamaskActions.SetAddressVerified, payload: true });
 
@@ -113,13 +116,24 @@ const Rent = () => {
   return (
     <>
       <div className="container py-3">
-        <div className="pricing-header p-3 pb-md-4 mx-auto text-center">
-          <h1 className="display-4 fw-normal text-body-emphasis">
+        <div className="pricing-header p-3 pb-md-4 mx-auto">
+          <h1 className="display-4 fw-normal text-body-emphasis text-center">
             Remote Car Rental Easy
           </h1>
           {state.error && (
             <div className="alert alert-danger" role="alert">
               <>{state.error.message || state.error}</>
+            </div>
+          )}
+          {license !== null && (
+            <div
+              className="alert alert-success text-left"
+              style={{ fontSize: '1.2rem' }}
+              role="alert"
+            >
+              <pre className="text-left">
+                {JSON.stringify(license, undefined, 6)}
+              </pre>
             </div>
           )}
           {notification && (

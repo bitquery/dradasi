@@ -11,7 +11,6 @@ import {
 } from 'did-jwt-vc';
 import { Resolver } from 'did-resolver';
 import { getResolver } from 'ethr-did-resolver';
-import { ethers } from 'ethers';
 import { MetamaskActions, MetaMaskContext } from '../hooks';
 import {
   clearDids,

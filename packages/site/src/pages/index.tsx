@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { EthrDID } from 'ethr-did';
 import {
@@ -14,6 +14,14 @@ import { Resolver } from 'did-resolver';
 import { ethr, getResolver } from 'ethr-did-resolver';
 import { MetamaskActions, MetaMaskContext } from '../hooks';
 import { connectSnap, getSnap, shouldDisplayReconnectButton } from '../utils';
+import {
+  clearDids,
+  connectSnap,
+  getDid,
+  getSnap,
+  saveDid,
+  shouldDisplayReconnectButton,
+} from '../utils';
 import {
   CallSCButton,
   Card,
@@ -32,7 +40,6 @@ const Container = styled.div`
   flex: 1;
   margin-top: 7.6rem;
   margin-bottom: 7.6rem;
-
   ${({ theme }) => theme.mediaQueries.small} {
     padding-left: 2.4rem;
     padding-right: 2.4rem;
@@ -115,16 +122,60 @@ const ErrorMessage = styled.div`
 
 const Index = () => {
   const [state, dispatch] = useContext(MetaMaskContext);
+  const [did, setDid] = useState<unknown | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      if (state.installedSnap) {
+        const loadedDid = (await getDid(state.accounts[0])) as Record<
+          string,
+          unknown
+        >;
+        setDid(loadedDid);
+      }
+    })();
+  }, [state.installedSnap, state.chainID, state.isConnected]);
 
   const handleConnectClick = async () => {
     try {
       await connectSnap();
       const installedSnap = await getSnap();
+      await state.connectMetamask();
 
       dispatch({
         type: MetamaskActions.SetInstalled,
         payload: installedSnap,
       });
+    } catch (e) {
+      console.error(e);
+      dispatch({ type: MetamaskActions.SetError, payload: e });
+    }
+  };
+
+  const handleSaveDid = async () => {
+    try {
+      if (!state.accounts) {
+        dispatch({
+          type: MetamaskActions.SetError,
+          payload: 'Account not found.',
+        });
+        return;
+      }
+
+      const b = { [state.accounts[0]]: { did: state.accounts[0] } };
+      const newDids = (await saveDid(b)) as Record<string, any>;
+      console.log('newSaveDids', newDids);
+      setDid(newDids[state.accounts[0]]);
+    } catch (e) {
+      console.error(e);
+      dispatch({ type: MetamaskActions.SetError, payload: e });
+    }
+  };
+
+  const handleClearDids = async () => {
+    try {
+      await clearDids();
+      setDid(null);
     } catch (e) {
       console.error(e);
       dispatch({ type: MetamaskActions.SetError, payload: e });
@@ -223,10 +274,14 @@ const Index = () => {
   return (
     <Container>
       <Heading>
-        Welcome to <Span>template-snap</Span>
+        Welcome to <Span>DRADASI</Span>
       </Heading>
       <Subtitle>
-        Get started by editing <code>src/index.ts</code>
+        {did ? (
+          <code>Loaded DID: {JSON.stringify(did)}</code>
+        ) : (
+          <>No DID found</>
+        )}
       </Subtitle>
       <CardContainer>
         {state.error && (
@@ -279,6 +334,44 @@ const Index = () => {
             disabled={!state.installedSnap}
           />
         )}
+        <Card
+          content={{
+            title: 'Load sample dids',
+            description:
+              'Display a custom message within a confirmation screen in MetaMask.',
+            button: (
+              <SendHelloButton
+                onClick={handleSaveDid}
+                disabled={!state.installedSnap}
+              />
+            ),
+          }}
+          disabled={!state.installedSnap}
+          fullWidth={
+            state.isFlask &&
+            Boolean(state.installedSnap) &&
+            !shouldDisplayReconnectButton(state.installedSnap)
+          }
+        />
+        <Card
+          content={{
+            title: 'Clear dids',
+            description:
+              'Display a custom message within a confirmation screen in MetaMask.',
+            button: (
+              <SendHelloButton
+                onClick={handleClearDids}
+                disabled={!state.installedSnap}
+              />
+            ),
+          }}
+          disabled={!state.installedSnap}
+          fullWidth={
+            state.isFlask &&
+            Boolean(state.installedSnap) &&
+            !shouldDisplayReconnectButton(state.installedSnap)
+          }
+        />
         <Card
           content={{
             title: 'Issue Drivers Licence',

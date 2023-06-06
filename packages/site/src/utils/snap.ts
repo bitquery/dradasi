@@ -51,33 +51,26 @@ export const getSnap = async (version?: string): Promise<Snap | undefined> => {
 };
 
 /**
- * Invoke the "hello" method from the example snap.
+ * Invoke the "getDid" method from the example snap.
+ *
+ * @param address - Wallet address to fetch did for.
  */
-
-export const sendHello = async () => {
-  const x = await window.ethereum.request({
-    method: 'wallet_invokeSnap',
-    params: { snapId: defaultSnapOrigin, request: { method: 'hello' } },
-  });
-  console.log(x);
-};
-
-/**
- * Invoke the "getDids" method from the example snap.
- */
-export const getDids = async () => {
+export const getDid = async (address: string) => {
   return await window.ethereum.request({
     method: 'wallet_invokeSnap',
-    params: { snapId: defaultSnapOrigin, request: { method: 'getDids' } },
+    params: {
+      snapId: defaultSnapOrigin,
+      request: { method: 'getDid', params: [address] },
+    },
   });
 };
 
 /**
  * Invoke the "saveDid" method from the example snap.
  *
- * @param did
+ * @param did - Record containing address and DID.
  */
-export const saveDid = async (did: any) => {
+export const saveDid = async (did: Record<string, unknown>) => {
   return await window.ethereum.request({
     method: 'wallet_invokeSnap',
     params: {
@@ -88,9 +81,8 @@ export const saveDid = async (did: any) => {
 };
 
 /**
- * Invoke the "saveDid" method from the example snap.
+ * Invoke the "clearDids" method from the example snap.
  *
- * @param did
  */
 export const clearDids = async () => {
   await window.ethereum.request({

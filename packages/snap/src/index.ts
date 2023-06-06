@@ -1,14 +1,27 @@
 import { Json, OnRpcRequestHandler } from '@metamask/snaps-types';
 import { panel, text, heading } from '@metamask/snaps-ui';
 
-type DID = Record<string, string>;
+type Address = string;
+type DID = Record<Address, Json>;
 
-const getDids = async (): Promise<Record<'dids', DID[]> | null> => {
+/**
+ * Returns DID saved for given address.
+ *
+ * @param params - List of arguments. Should contain address at index 0.
+ */
+const getDid = async (params: Json[]): Promise<Json | null> => {
+  const addr = params[0] as string;
+  if (!addr) {
+    return null;
+  }
+
   const result = await snap.request({
     method: 'snap_dialog',
     params: {
       type: 'confirmation',
-      content: panel([heading('Would you like to load and display your DIDs')]),
+      content: panel([
+        heading(`Would you like to display did for given address ${addr}?`),
+      ]),
     },
   });
 
@@ -16,10 +29,16 @@ const getDids = async (): Promise<Record<'dids', DID[]> | null> => {
     return null;
   }
 
-  return snap.request({
+  const dids = (await snap.request({
     method: 'snap_manageState',
     params: { operation: 'get' },
-  }) as Promise<Record<'dids', DID[]>>;
+  })) as DID;
+
+  if (!dids) {
+    return null;
+  }
+
+  return dids[addr];
 };
 
 const clearDids = async () => {
@@ -29,29 +48,35 @@ const clearDids = async () => {
   });
 };
 
+/**
+ * Saves did inside encrypted storage.
+ *
+ * @param params - List of arguments. Should contain Record<Address, Json> at index 0.
+ */
 const saveDid = async (params: Json[]) => {
+  const did = params[0] as Record<Address, Json>;
   const dids = (await snap.request({
     method: 'snap_manageState',
     params: { operation: 'get' },
-  })) as Record<'dids', Json[]>;
+  })) as Record<Address, Json>;
 
   if (!dids) {
     snap.request({
       method: 'snap_manageState',
-      params: { operation: 'update', newState: { dids: [params[0]] } },
+      params: { operation: 'update', newState: { ...did } },
     });
-    return { dids: [params[0]] };
+    return { ...did };
   }
 
   snap.request({
     method: 'snap_manageState',
     params: {
       operation: 'update',
-      newState: { dids: [...dids.dids, params[0]] },
+      newState: { ...dids, ...did },
     },
   });
 
-  return { dids: [...dids.dids, params[0]] };
+  return { ...dids, ...did };
 };
 
 /**
@@ -80,8 +105,8 @@ export const onRpcRequest: OnRpcRequestHandler = ({ origin, request }) => {
           ]),
         },
       });
-    case 'getDids':
-      return getDids();
+    case 'getDid':
+      return getDid(request.params as Json[]);
     case 'saveDid':
       return saveDid(request.params as Json[]);
     case 'clearDids':

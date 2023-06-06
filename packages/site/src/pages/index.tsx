@@ -4,7 +4,7 @@ import { MetamaskActions, MetaMaskContext } from '../hooks';
 import {
   clearDids,
   connectSnap,
-  getDids,
+  getDid,
   getSnap,
   saveDid,
   shouldDisplayReconnectButton,
@@ -16,7 +16,6 @@ import {
   SendHelloButton,
   Card,
 } from '../components';
-import { DidList } from '../components/DidItem';
 
 const Container = styled.div`
   display: flex;
@@ -104,15 +103,14 @@ const ErrorMessage = styled.div`
 
 const Index = () => {
   const [state, dispatch] = useContext(MetaMaskContext);
-  const [dids, setDids] = useState<unknown[]>([]);
-  const [selectedDid, setSelectedDid] = useState<unknown>(null);
+  const [did, setDid] = useState<unknown | null>(null);
+  const address = '0x80023f8B4Fc2AaF2133b96C824B2e1Ab878D463e';
 
   useEffect(() => {
     (async () => {
       if (state.installedSnap) {
-        const loadedDids = (await getDids()) as Record<'dids', unknown[]>;
-        setDids(loadedDids?.dids);
-        console.log(dids);
+        const loadedDids = (await getDid(address)) as Record<string, unknown>;
+        setDid(loadedDids);
       }
     })();
   }, [state.installedSnap]);
@@ -134,9 +132,10 @@ const Index = () => {
 
   const handleSaveDid = async () => {
     try {
-      const b = { x: 'did' };
-      const newDids = (await saveDid(b)) as Record<'dids', unknown[]>;
-      setDids(newDids.dids);
+      const b = { [address]: { did: 1 } };
+      const newDids = (await saveDid(b)) as Record<string, any>;
+      console.log('newSaveDids', newDids);
+      setDid(newDids[address]);
     } catch (e) {
       console.error(e);
       dispatch({ type: MetamaskActions.SetError, payload: e });
@@ -146,7 +145,7 @@ const Index = () => {
   const handleClearDids = async () => {
     try {
       await clearDids();
-      setDids([]);
+      setDid(null);
     } catch (e) {
       console.error(e);
       dispatch({ type: MetamaskActions.SetError, payload: e });
@@ -156,10 +155,14 @@ const Index = () => {
   return (
     <Container>
       <Heading>
-        Welcome to <Span>template-snap</Span>
+        Welcome to <Span>DRADASI</Span>
       </Heading>
       <Subtitle>
-        Get started by editing <code>src/index.ts</code>
+        {did ? (
+          <code>Loaded DID: {JSON.stringify(did)}</code>
+        ) : (
+          <>No DID found</>
+        )}
       </Subtitle>
       <CardContainer>
         {state.error && (
@@ -248,11 +251,7 @@ const Index = () => {
             !shouldDisplayReconnectButton(state.installedSnap)
           }
         />
-        {dids ? (
-          <DidList dids={dids} callback={setSelectedDid} />
-        ) : (
-          <p>No DIDs found</p>
-        )}
+
         <Notice>
           <p>
             Please note that the <b>snap.manifest.json</b> and{' '}

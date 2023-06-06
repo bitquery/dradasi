@@ -11,9 +11,6 @@ import { Snap } from '../types';
 import { isFlask, getSnap } from '../utils';
 import { ethers } from 'ethers';
 import detectEthereumProvider from '@metamask/detect-provider';
-import { Snap } from '../types';
-import { isFlask, getSnap } from '../utils';
-import { signAndVerify } from '../utils/signAndVerify';
 
 export type MetamaskState = {
   isFlask: boolean;

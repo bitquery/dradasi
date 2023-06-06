@@ -131,9 +131,10 @@ const Index = () => {
           unknown
         >;
         setDid(loadedDid);
+        console.log(loadedDid);
       }
     })();
-  }, [state.installedSnap, state.chainID, state.isConnected]);
+  }, [state.installedSnap]);
 
   const handleConnectClick = async () => {
     try {
@@ -151,26 +152,6 @@ const Index = () => {
     }
   };
 
-  const handleSaveDid = async () => {
-    try {
-      if (!state.accounts) {
-        dispatch({
-          type: MetamaskActions.SetError,
-          payload: 'Account not found.',
-        });
-        return;
-      }
-
-      const b = { [state.accounts[0]]: { did: state.accounts[0] } };
-      const newDids = (await saveDid(b)) as Record<string, any>;
-      console.log('newSaveDids', newDids);
-      setDid(newDids[state.accounts[0]]);
-    } catch (e) {
-      console.error(e);
-      dispatch({ type: MetamaskActions.SetError, payload: e });
-    }
-  };
-
   const handleClearDids = async () => {
     try {
       await clearDids();
@@ -181,68 +162,24 @@ const Index = () => {
     }
   };
 
-  const handleSetIDClick = async () => {
-    // set random BigInt for NFT ID
-    function generateRandomBigInt(length: number): bigint {
-      const byteLength = Math.ceil(length / 8); // Convert bits to bytes
-      const randomBytes = new Uint8Array(byteLength);
-      crypto.getRandomValues(randomBytes);
-      const hexString = Array.from(randomBytes)
-        .map((byte) => byte.toString(16).padStart(2, '0'))
-        .join('');
-      return BigInt(`0x${hexString}`);
+  /**
+   * Verifiers jwt and handlers rent process. In non-hackaton world this would be moved
+   * probably to some backend.
+   *
+   * @param jwt DID JWT provided by user.
+   * @returns void
+   */
+  const handleRent = (jwt: string) => async () => {
+    if (!jwt) {
+      dispatch({
+        type: MetamaskActions.SetError,
+        payload: 'DID not provided',
+      });
+      return;
     }
 
-    const randomBigInt = generateRandomBigInt(256); // Generate a random 256-bit BigInt
-    dispatch({ type: MetamaskActions.SetNFTID, payload: BigInt(randomBigInt) });
-  };
-
-  const handleIssueClick = async () => {
-    let address: any;
-    const accounts = await (window as any).ethereum.request({
-      method: 'eth_requestAccounts',
-    });
-    address = accounts[0];
-    console.log(accounts[0]);
-    console.log(address);
-
-    // TODO: move to env
-    const issuer = new EthrDID({
-      identifier: '0xf1232f840f3ad7d23fcdaa84d6c66dac24efb198',
-      privateKey:
-        'd8b595680851765f38ea5405129244ba3cbad84467d190859f4c8b20c1ff6c75',
-    }) as Issuer;
-
-    const vcPayload: JwtCredentialPayload = {
-      sub: `did:ethr:${address}`,
-      nbf: 1562950282,
-      vc: {
-        '@context': ['https://www.w3.org/2018/credentials/v1'],
-        type: ['VerifiableCredential'],
-        credentialSubject: {
-          document: {
-            type: 'DriversLicence',
-            name: 'Dra',
-            surname: 'Dasi',
-          },
-        },
-      },
-    };
-
-    const vcJwt = await createVerifiableCredentialJwt(vcPayload, issuer);
-    console.log(vcJwt);
-
-    const vpPayload: JwtPresentationPayload = {
-      vp: {
-        '@context': ['https://www.w3.org/2018/credentials/v1'],
-        type: ['VerifiablePresentation'],
-        verifiableCredential: [vcJwt],
-      },
-    };
-
-    const vpJwt = await createVerifiablePresentationJwt(vpPayload, issuer);
-    console.log(vpJwt);
-
+    // set random BigInt for NFT ID
+    // await handleVerifyDID();
     const providerConfig = {
       networks: [
         {
@@ -258,16 +195,71 @@ const Index = () => {
         },
       ],
     };
+
     const resolver = new Resolver(getResolver(providerConfig));
+    // const doc = await resolver.resolve(`did:ethr:${address}`);
+    // const verifiedVC = await verifyCredential(vcJwt, resolver);
+    const verifiedVP = await verifyPresentation(jwt, resolver);
+    console.log(verifiedVP.verified);
+    function generateRandomBigInt(length: number): bigint {
+      const byteLength = Math.ceil(length / 8); // Convert bits to bytes
+      const randomBytes = new Uint8Array(byteLength);
+      crypto.getRandomValues(randomBytes);
+      const hexString = Array.from(randomBytes)
+        .map((byte) => byte.toString(16).padStart(2, '0'))
+        .join('');
+      return BigInt(`0x${hexString}`);
+    }
 
-    const doc = await resolver.resolve(`did:ethr:${address}`);
-    console.log(doc);
+    const randomBigInt = generateRandomBigInt(256); // Generate a random 256-bit BigInt
+    dispatch({ type: MetamaskActions.SetNFTID, payload: BigInt(randomBigInt) });
+  };
 
-    const verifiedVC = await verifyCredential(vcJwt, resolver);
-    console.log(verifiedVC);
+  const handleIssueDID = async () => {
+    try {
+      const address = state.accounts[0] as string;
 
-    const verifiedVP = await verifyPresentation(vpJwt, resolver);
-    console.log(verifiedVP);
+      const issuer = new EthrDID({
+        identifier: '0xf1232f840f3ad7d23fcdaa84d6c66dac24efb198',
+        privateKey:
+          'd8b595680851765f38ea5405129244ba3cbad84467d190859f4c8b20c1ff6c75',
+      }) as Issuer;
+
+      const vcPayload: JwtCredentialPayload = {
+        sub: `did:ethr:${address}`,
+        nbf: 1562950282,
+        vc: {
+          '@context': ['https://www.w3.org/2018/credentials/v1'],
+          type: ['VerifiableCredential'],
+          credentialSubject: {
+            document: {
+              type: 'DriversLicence',
+              name: 'Dra',
+              surname: 'Dasi',
+            },
+          },
+        },
+      };
+
+      const vcJwt = await createVerifiableCredentialJwt(vcPayload, issuer);
+      const vpPayload: JwtPresentationPayload = {
+        vp: {
+          '@context': ['https://www.w3.org/2018/credentials/v1'],
+          type: ['VerifiablePresentation'],
+          verifiableCredential: [vcJwt],
+        },
+      };
+
+      const vpJwt = await createVerifiablePresentationJwt(vpPayload, issuer);
+      console.log(vcJwt);
+
+      const b = { [state.accounts[0]]: vpJwt };
+      const newDids = (await saveDid(b)) as Record<string, any>;
+      console.log('newSaveDids', newDids);
+    } catch (e) {
+      console.error(e);
+      dispatch({ type: MetamaskActions.SetError, payload: e });
+    }
   };
 
   return (
@@ -275,13 +267,7 @@ const Index = () => {
       <Heading>
         Welcome to <Span>DRADASI</Span>
       </Heading>
-      <Subtitle>
-        {did ? (
-          <code>Loaded DID: {JSON.stringify(did)}</code>
-        ) : (
-          <>No DID found</>
-        )}
-      </Subtitle>
+      <Subtitle>{did ? <code>Loaded DID</code> : <>No DID found</>}</Subtitle>
       <CardContainer>
         {state.error && (
           <ErrorMessage>
@@ -335,23 +321,6 @@ const Index = () => {
         )}
         <Card
           content={{
-            title: 'Load sample dids',
-            description:
-              'Display a custom message within a confirmation screen in MetaMask.',
-            button: AnyButton('Load sample dids', {
-              onClick: handleSaveDid,
-              disabled: !state.installedSnap,
-            }),
-          }}
-          disabled={!state.installedSnap}
-          fullWidth={
-            state.isFlask &&
-            Boolean(state.installedSnap) &&
-            !shouldDisplayReconnectButton(state.installedSnap)
-          }
-        />
-        <Card
-          content={{
             title: 'Clear dids',
             description:
               'Display a custom message within a confirmation screen in MetaMask.',
@@ -370,24 +339,23 @@ const Index = () => {
         <Card
           content={{
             title: 'Issue Drivers Licence',
-            description: '',
+            description: 'Issue Drivers Licence DID.',
             button: (
               <IssueButton
-                // disabled={!state.installedSnap}
-                onClick={handleIssueClick}
+                disabled={!state.installedSnap}
+                onClick={handleIssueDID}
               />
             ),
           }}
-          // disabled={!state.installedSnap}
         />
         <Card
           content={{
-            title: 'Set NFT ID',
-            description: '',
+            title: 'Rent',
+            description: 'Rent a car',
             button: (
               <SetIDButton
                 disabled={!state.installedSnap}
-                onClick={handleSetIDClick}
+                onClick={handleRent(did)}
               />
             ),
           }}

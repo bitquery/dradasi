@@ -37,11 +37,7 @@ const RightContainer = styled.div`
   align-items: center;
 `;
 
-export const Header = ({
-  handleToggleClick,
-}: {
-  handleToggleClick(): void;
-}) => {
+export const Header = () => {
   const theme = useTheme();
   const [state, dispatch] = useContext(MetaMaskContext);
 
@@ -49,6 +45,7 @@ export const Header = ({
     try {
       await connectSnap();
       const installedSnap = await getSnap();
+      await state.connectMetamask();
 
       dispatch({
         type: MetamaskActions.SetInstalled,
@@ -63,13 +60,9 @@ export const Header = ({
     <HeaderWrapper>
       <LogoWrapper>
         <SnapLogo color={theme.colors.icon.default} size={36} />
-        <Title>template-snap</Title>
+        <Title>DRADASI</Title>
       </LogoWrapper>
       <RightContainer>
-        <Toggle
-          onToggle={handleToggleClick}
-          defaultChecked={getThemePreference()}
-        />
         <HeaderButtons state={state} onConnectClick={handleConnectClick} />
       </RightContainer>
     </HeaderWrapper>

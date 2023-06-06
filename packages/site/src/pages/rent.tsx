@@ -1,5 +1,4 @@
-import { ethers, BigNumber } from 'ethers';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useState } from 'react';
 import { MetaMaskContext, MetamaskActions } from '../hooks/MetamaskContext';
 import { verifyPresentation } from 'did-jwt-vc';
 import { Resolver } from 'did-resolver';
@@ -7,28 +6,11 @@ import { getResolver } from 'ethr-did-resolver';
 import { getDid } from '../utils/snap';
 import { generateRandomBigInt } from '../utils/nft';
 import { signAndVerify } from '../utils/signAndVerify';
-import contractABI from '../../../../contractABI.json';
 import { callContractMethod } from '../utils';
 
 const Rent = () => {
   const [state, dispatch] = useContext(MetaMaskContext);
-  const [did, setDid] = useState<string>('');
-  const [nftId, setNftId] = useState<bigint | null>(null);
   const [notification, setNotification] = useState('');
-
-  const contractAddress = '0x7dbC1972E8dC9258611Cb3929AC0e63eaF8a2c0a';
-  const methodName = 'rental';
-  const weiAmount = BigNumber.from(1);
-
-  useEffect(() => {
-    (async () => {
-      if (state.installedSnap) {
-        const loadedDid = (await getDid(state.accounts[0])) as string;
-        setDid(loadedDid);
-        console.log('loadedDid', loadedDid);
-      }
-    })();
-  }, [state.installedSnap]);
 
   /**
    * Verifiers jwt and handlers rent process. In non-hackaton world this would be moved
@@ -36,6 +18,15 @@ const Rent = () => {
    *
    */
   const handleRent = async () => {
+    if (!state.installedSnap) {
+      dispatch({
+        type: MetamaskActions.SetError,
+        payload: 'Snap not installed.',
+      });
+      return;
+    }
+    const did = (await getDid(state.accounts[0])) as string;
+
     if (!did) {
       dispatch({
         type: MetamaskActions.SetError,
@@ -43,9 +34,6 @@ const Rent = () => {
       });
       return;
     }
-
-    // set random BigInt for NFT ID
-    // await handleVerifyDID();
     const providerConfig = {
       networks: [
         {
@@ -109,9 +97,7 @@ const Rent = () => {
     dispatch({ type: MetamaskActions.SetAddressVerified, payload: true });
 
     const randomBigInt = generateRandomBigInt(256); // Generate a random 256-bit BigInt
-    setNftId(randomBigInt);
-
-    const result = callContractMethod(randomBigInt);
+    const result = await callContractMethod(randomBigInt);
     console.log(result);
     setNotification('Car rented');
   };
@@ -225,7 +211,6 @@ const Rent = () => {
                   />
                   <button
                     onClick={handleRent}
-                    disabled={did === ''}
                     type="button"
                     className="w-100 btn btn-lg btn-outline-primary"
                   >
@@ -251,7 +236,6 @@ const Rent = () => {
 
                   <button
                     onClick={handleRent}
-                    disabled={did === ''}
                     type="button"
                     className="w-100 btn btn-lg btn-outline-primary"
                   >
@@ -278,7 +262,6 @@ const Rent = () => {
 
                   <button
                     onClick={handleRent}
-                    disabled={did === ''}
                     type="button"
                     className="w-100 btn btn-lg btn-primary"
                   >

@@ -1,5 +1,17 @@
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import styled from 'styled-components';
+import { EthrDID } from 'ethr-did';
+import {
+  Issuer,
+  JwtCredentialPayload,
+  createVerifiableCredentialJwt,
+  JwtPresentationPayload,
+  createVerifiablePresentationJwt,
+  verifyCredential,
+  verifyPresentation,
+} from 'did-jwt-vc';
+import { Resolver } from 'did-resolver';
+import { ethr, getResolver } from 'ethr-did-resolver';
 import { MetamaskActions, MetaMaskContext } from '../hooks';
 import { connectSnap, getSnap, shouldDisplayReconnectButton } from '../utils';
 import {
@@ -8,6 +20,7 @@ import {
   ConnectButton,
   HeaderButtons,
   InstallFlaskButton,
+  IssueButton,
   ReconnectButton,
   SetIDButton,
 } from '../components';
@@ -134,6 +147,79 @@ const Index = () => {
     dispatch({ type: MetamaskActions.SetNFTID, payload: BigInt(randomBigInt) });
   };
 
+  const handleIssueClick = async () => {
+    let address: any;
+    const accounts = await (window as any).ethereum.request({
+      method: 'eth_requestAccounts',
+    });
+    address = accounts[0];
+    console.log(accounts[0]);
+    console.log(address);
+
+    // TODO: move to env
+    const issuer = new EthrDID({
+      identifier: '0xf1232f840f3ad7d23fcdaa84d6c66dac24efb198',
+      privateKey:
+        'd8b595680851765f38ea5405129244ba3cbad84467d190859f4c8b20c1ff6c75',
+    }) as Issuer;
+
+    const vcPayload: JwtCredentialPayload = {
+      sub: `did:ethr:${address}`,
+      nbf: 1562950282,
+      vc: {
+        '@context': ['https://www.w3.org/2018/credentials/v1'],
+        type: ['VerifiableCredential'],
+        credentialSubject: {
+          document: {
+            type: 'DriversLicence',
+            name: 'Dra',
+            surname: 'Dasi',
+          },
+        },
+      },
+    };
+
+    const vcJwt = await createVerifiableCredentialJwt(vcPayload, issuer);
+    console.log(vcJwt);
+
+    const vpPayload: JwtPresentationPayload = {
+      vp: {
+        '@context': ['https://www.w3.org/2018/credentials/v1'],
+        type: ['VerifiablePresentation'],
+        verifiableCredential: [vcJwt],
+      },
+    };
+
+    const vpJwt = await createVerifiablePresentationJwt(vpPayload, issuer);
+    console.log(vpJwt);
+
+    const providerConfig = {
+      networks: [
+        {
+          name: 'mainnet',
+          rpcUrl:
+            'https://mainnet.infura.io/v3/997db0785ce14d3ebb8f379c4e4acf6b',
+          // registry: '0xdca7ef03e98e0dc2b855be647c39abe984fcf21b',
+        },
+        {
+          name: '0x5',
+          rpcUrl:
+            'https://goerli.infura.io/v3/997db0785ce14d3ebb8f379c4e4acf6b',
+        },
+      ],
+    };
+    const resolver = new Resolver(getResolver(providerConfig));
+
+    const doc = await resolver.resolve(`did:ethr:${address}`);
+    console.log(doc);
+
+    const verifiedVC = await verifyCredential(vcJwt, resolver);
+    console.log(verifiedVC);
+
+    const verifiedVP = await verifyPresentation(vpJwt, resolver);
+    console.log(verifiedVP);
+  };
+
   return (
     <Container>
       <Heading>
@@ -193,6 +279,19 @@ const Index = () => {
             disabled={!state.installedSnap}
           />
         )}
+        <Card
+          content={{
+            title: 'Issue Drivers Licence',
+            description: '',
+            button: (
+              <IssueButton
+                // disabled={!state.installedSnap}
+                onClick={handleIssueClick}
+              />
+            ),
+          }}
+          // disabled={!state.installedSnap}
+        />
         <Card
           content={{
             title: 'Set NFT ID',

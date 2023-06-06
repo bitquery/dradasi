@@ -139,3 +139,7 @@ export const CallSCButton = (props: ComponentProps<typeof Button>) => {
 export const SetIDButton = (props: ComponentProps<typeof Button>) => {
   return <Button {...props}>Set ID</Button>;
 };
+
+export const IssueButton = (props: ComponentProps<typeof Button>) => {
+  return <Button {...props}>Issue Drivers License</Button>;
+};

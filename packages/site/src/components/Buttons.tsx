@@ -1,9 +1,8 @@
-import {ComponentProps, useContext} from 'react';
+import { ComponentProps, useContext } from 'react';
 import styled from 'styled-components';
-import {MetaMaskContext, MetamaskState} from '../hooks';
+import { MetaMaskContext, MetamaskState } from '../hooks';
 import { ReactComponent as FlaskFox } from '../assets/flask_fox.svg';
 import { callContractMethod, shouldDisplayReconnectButton } from '../utils';
-
 
 const Link = styled.a`
   display: flex;
@@ -131,10 +130,7 @@ export const CallSCButton = (props: ComponentProps<typeof Button>) => {
   const [state, _] = useContext(MetaMaskContext);
 
   return (
-    <Button
-      {...props}
-      onClick={() => callContractMethod(state.nftID, state.data)}
-    >
+    <Button {...props} onClick={() => callContractMethod(state.nftID)}>
       Pay
     </Button>
   );

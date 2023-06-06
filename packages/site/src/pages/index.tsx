@@ -5,9 +5,11 @@ import { connectSnap, getSnap, shouldDisplayReconnectButton } from '../utils';
 import {
   CallSCButton,
   Card,
-  ConnectButton, HeaderButtons,
+  ConnectButton,
+  HeaderButtons,
   InstallFlaskButton,
-  ReconnectButton, SetIDButton,
+  ReconnectButton,
+  SetIDButton,
 } from '../components';
 
 const Container = styled.div`
@@ -117,8 +119,19 @@ const Index = () => {
   };
 
   const handleSetIDClick = async () => {
-    dispatch({ type: MetamaskActions.SetNFTID, payload: BigInt(124) });
-    dispatch({ type: MetamaskActions.SetData, payload: '0xbb' });
+    // set random BigInt for NFT ID
+    function generateRandomBigInt(length: number): bigint {
+      const byteLength = Math.ceil(length / 8); // Convert bits to bytes
+      const randomBytes = new Uint8Array(byteLength);
+      crypto.getRandomValues(randomBytes);
+      const hexString = Array.from(randomBytes)
+        .map((byte) => byte.toString(16).padStart(2, '0'))
+        .join('');
+      return BigInt(`0x${hexString}`);
+    }
+
+    const randomBigInt = generateRandomBigInt(256); // Generate a random 256-bit BigInt
+    dispatch({ type: MetamaskActions.SetNFTID, payload: BigInt(randomBigInt) });
   };
 
   return (

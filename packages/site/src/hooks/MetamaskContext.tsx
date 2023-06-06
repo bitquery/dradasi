@@ -14,14 +14,12 @@ export type MetamaskState = {
   installedSnap?: Snap;
   error?: Error;
   nftID?: bigint;
-  data?: string; // binary data, starting with 0x
 };
 
 const initialState: MetamaskState = {
   isFlask: false,
   error: undefined,
   nftID: undefined,
-  data: undefined,
 };
 
 type MetamaskDispatch = { type: MetamaskActions; payload: any };
@@ -40,7 +38,6 @@ export enum MetamaskActions {
   SetFlaskDetected = 'SetFlaskDetected',
   SetError = 'SetError',
   SetNFTID = 'SetNFTID',
-  SetData = 'SetData',
 }
 
 const reducer: Reducer<MetamaskState, MetamaskDispatch> = (state, action) => {
@@ -67,12 +64,6 @@ const reducer: Reducer<MetamaskState, MetamaskDispatch> = (state, action) => {
       return {
         ...state,
         nftID: action.payload,
-      };
-
-    case MetamaskActions.SetData:
-      return {
-        ...state,
-        data: action.payload,
       };
 
     default:
@@ -137,6 +128,10 @@ export const MetaMaskProvider = ({children}: { children: ReactNode }) => {
       }
     };
   }, [state.error]);
+
+  useEffect(() => {
+    console.log(state.nftID);
+  }, [state.nftID]);
 
   return (
     <MetaMaskContext.Provider value={[state, dispatch]}>

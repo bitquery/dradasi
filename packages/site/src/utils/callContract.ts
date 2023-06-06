@@ -1,7 +1,7 @@
 import { BigNumber, ethers } from 'ethers';
 import contractABI from '../../../../contractABI.json';
 
-const contractAddress = '0xF3da5C648f378fD2feb47CD1Fc4321A5F77F5533';
+const contractAddress = '0x7dbC1972E8dC9258611Cb3929AC0e63eaF8a2c0a';
 const methodName = 'rental';
 const weiAmount = BigNumber.from(1);
 
@@ -25,14 +25,13 @@ async function connectAndCreateContract() {
 
 export async function callContractMethod(
   id: bigint | undefined,
-  data: string | undefined,
 ) {
   if (!id) {
     throw new Error('id is undefined');
   }
 
   const contract = await connectAndCreateContract();
-  const methodParams = [id, data];
+  const methodParams = [id];
   const result = await contract[methodName](...methodParams, {
     value: weiAmount,
   });

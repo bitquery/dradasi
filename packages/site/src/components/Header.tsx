@@ -3,7 +3,7 @@ import styled, { useTheme } from 'styled-components';
 import { MetamaskActions, MetaMaskContext } from '../hooks';
 import { connectSnap, getThemePreference, getSnap } from '../utils';
 import { HeaderButtons } from './Buttons';
-import { SnapLogo } from './SnapLogo';
+import { Logo } from './Logo';
 import { Toggle } from './Toggle';
 
 const HeaderWrapper = styled.header`
@@ -37,11 +37,7 @@ const RightContainer = styled.div`
   align-items: center;
 `;
 
-export const Header = ({
-  handleToggleClick,
-}: {
-  handleToggleClick(): void;
-}) => {
+export const Header = () => {
   const theme = useTheme();
   const [state, dispatch] = useContext(MetaMaskContext);
 
@@ -49,6 +45,7 @@ export const Header = ({
     try {
       await connectSnap();
       const installedSnap = await getSnap();
+      await state.connectMetamask();
 
       dispatch({
         type: MetamaskActions.SetInstalled,
@@ -62,14 +59,10 @@ export const Header = ({
   return (
     <HeaderWrapper>
       <LogoWrapper>
-        <SnapLogo color={theme.colors.icon.default} size={36} />
-        <Title>template-snap</Title>
+        <Logo size={36} />
+        <Title>DRADASI</Title>
       </LogoWrapper>
       <RightContainer>
-        <Toggle
-          onToggle={handleToggleClick}
-          defaultChecked={getThemePreference()}
-        />
         <HeaderButtons state={state} onConnectClick={handleConnectClick} />
       </RightContainer>
     </HeaderWrapper>

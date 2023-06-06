@@ -31,7 +31,12 @@ payment, etc.
 
 ## References
 
-[DID Schemas](https://github.com/perma-id/w3id.org)
+[DID Resolver](https://dev.uniresolver.io/)
+
+[DID Validator](https://didlint.ownyourdata.eu/validate)
+
+[Go Diddy](https://godiddy.com/app/search)
+
 
 
 

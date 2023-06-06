@@ -104,21 +104,24 @@ const ErrorMessage = styled.div`
 const Index = () => {
   const [state, dispatch] = useContext(MetaMaskContext);
   const [did, setDid] = useState<unknown | null>(null);
-  const address = '0x80023f8B4Fc2AaF2133b96C824B2e1Ab878D463e';
 
   useEffect(() => {
     (async () => {
       if (state.installedSnap) {
-        const loadedDids = (await getDid(address)) as Record<string, unknown>;
-        setDid(loadedDids);
+        const loadedDid = (await getDid(state.accounts[0])) as Record<
+          string,
+          unknown
+        >;
+        setDid(loadedDid);
       }
     })();
-  }, [state.installedSnap]);
+  }, [state.installedSnap, state.chainID, state.isConnected]);
 
   const handleConnectClick = async () => {
     try {
       await connectSnap();
       const installedSnap = await getSnap();
+      await state.connectMetamask();
 
       dispatch({
         type: MetamaskActions.SetInstalled,
@@ -132,10 +135,18 @@ const Index = () => {
 
   const handleSaveDid = async () => {
     try {
-      const b = { [address]: { did: 1 } };
+      if (!state.accounts) {
+        dispatch({
+          type: MetamaskActions.SetError,
+          payload: 'Account not found.',
+        });
+        return;
+      }
+
+      const b = { [state.accounts[0]]: { did: state.accounts[0] } };
       const newDids = (await saveDid(b)) as Record<string, any>;
       console.log('newSaveDids', newDids);
-      setDid(newDids[address]);
+      setDid(newDids[state.accounts[0]]);
     } catch (e) {
       console.error(e);
       dispatch({ type: MetamaskActions.SetError, payload: e });

@@ -3,21 +3,35 @@ import {
   Dispatch,
   ReactNode,
   Reducer,
+  useCallback,
   useEffect,
   useReducer,
 } from 'react';
 import { Snap } from '../types';
 import { isFlask, getSnap } from '../utils';
+import detectEthereumProvider from '@metamask/detect-provider';
 
 export type MetamaskState = {
   isFlask: boolean;
+  isConnected: boolean;
   installedSnap?: Snap;
   error?: Error;
+  accounts: any[];
+  chainID: number;
+  hasProvider: boolean;
+  connecting: boolean;
+  connectMetamask: () => Promise<void>;
 };
 
 const initialState: MetamaskState = {
   isFlask: false,
+  isConnected: false,
   error: undefined,
+  accounts: [],
+  chainID: 0,
+  hasProvider: false,
+  connecting: false,
+  connectMetamask: async () => {},
 };
 
 type MetamaskDispatch = { type: MetamaskActions; payload: any };
@@ -35,6 +49,11 @@ export enum MetamaskActions {
   SetInstalled = 'SetInstalled',
   SetFlaskDetected = 'SetFlaskDetected',
   SetError = 'SetError',
+  SetHasProvider = 'SetHasProvider',
+  SetAccounts = 'SetAccounts',
+  SetNetwork = 'SetNetwork',
+  SetConnecting = 'SetConnecting',
+  SetIsConnected = 'SetIsConnected',
 }
 
 const reducer: Reducer<MetamaskState, MetamaskDispatch> = (state, action) => {
@@ -57,6 +76,30 @@ const reducer: Reducer<MetamaskState, MetamaskDispatch> = (state, action) => {
         error: action.payload,
       };
 
+    case MetamaskActions.SetAccounts:
+      return {
+        ...state,
+        accounts: action.payload,
+      };
+
+    case MetamaskActions.SetNetwork:
+      return {
+        ...state,
+        chainID: action.payload,
+      };
+
+    case MetamaskActions.SetHasProvider:
+      return {
+        ...state,
+        hasProvider: action.payload,
+      };
+
+    case MetamaskActions.SetConnecting:
+      return {
+        ...state,
+        connecting: action.payload,
+      };
+
     default:
       return state;
   }
@@ -75,6 +118,70 @@ export const MetaMaskProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const [state, dispatch] = useReducer(reducer, initialState);
+
+  // useCallback ensures that you don't uselessly recreate the _updateWallet function on every render
+  const _updateWallet = useCallback(async (providedAccounts?: any) => {
+    const accounts =
+      providedAccounts ||
+      (await window.ethereum.request({ method: 'eth_accounts' }));
+
+    if (accounts.length === 0) {
+      // If there are no accounts, then the user is disconnected
+      // setWallet(disconnectedState);
+      dispatch({
+        type: MetamaskActions.SetAccounts,
+        payload: [],
+      });
+      return;
+    }
+
+    const chainId = await window.ethereum.request({
+      method: 'eth_chainId',
+    });
+
+    dispatch({
+      type: MetamaskActions.SetNetwork,
+      payload: chainId,
+    });
+
+    dispatch({
+      type: MetamaskActions.SetAccounts,
+      payload: accounts,
+    });
+  }, []);
+
+  const updateWalletAndAccounts = useCallback(
+    () => _updateWallet(),
+    [_updateWallet],
+  );
+  const updateWallet = useCallback(
+    (accounts: any) => _updateWallet(accounts),
+    [_updateWallet],
+  );
+
+  useEffect(() => {
+    const getProvider = async () => {
+      const provider = await detectEthereumProvider({ silent: true });
+
+      dispatch({
+        type: MetamaskActions.SetHasProvider,
+        payload: Boolean(provider),
+      });
+
+      if (provider) {
+        updateWalletAndAccounts();
+        window.ethereum.on('accountsChanged', updateWallet);
+        window.ethereum.on('chainChanged', updateWalletAndAccounts);
+      }
+    };
+
+    getProvider();
+
+    return () => {
+      window.ethereum?.removeListener('accountsChanged', updateWallet);
+      window.ethereum?.removeListener('chainChanged', updateWalletAndAccounts);
+    };
+  }, [updateWallet, updateWalletAndAccounts]);
 
   useEffect(() => {
     async function detectFlask() {
@@ -120,8 +227,33 @@ export const MetaMaskProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [state.error]);
 
+  const connectMetamask = async () => {
+    dispatch({
+      type: MetamaskActions.SetConnecting,
+      payload: true,
+    });
+
+    try {
+      const accounts = await window.ethereum.request({
+        method: 'eth_requestAccounts',
+      });
+      // clearError();
+      updateWallet(accounts);
+    } catch (err: any) {
+      dispatch({
+        type: MetamaskActions.SetError,
+        payload: err,
+      });
+    }
+
+    dispatch({
+      type: MetamaskActions.SetConnecting,
+      payload: false,
+    });
+  };
+
   return (
-    <MetaMaskContext.Provider value={[state, dispatch]}>
+    <MetaMaskContext.Provider value={[{ ...state, connectMetamask }, dispatch]}>
       {children}
     </MetaMaskContext.Provider>
   );

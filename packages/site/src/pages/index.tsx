@@ -11,9 +11,8 @@ import {
   verifyPresentation,
 } from 'did-jwt-vc';
 import { Resolver } from 'did-resolver';
-import { ethr, getResolver } from 'ethr-did-resolver';
+import { getResolver } from 'ethr-did-resolver';
 import { MetamaskActions, MetaMaskContext } from '../hooks';
-import { connectSnap, getSnap, shouldDisplayReconnectButton } from '../utils';
 import {
   clearDids,
   connectSnap,
@@ -23,10 +22,10 @@ import {
   shouldDisplayReconnectButton,
 } from '../utils';
 import {
+  AnyButton,
   CallSCButton,
   Card,
   ConnectButton,
-  HeaderButtons,
   InstallFlaskButton,
   IssueButton,
   ReconnectButton,
@@ -339,12 +338,10 @@ const Index = () => {
             title: 'Load sample dids',
             description:
               'Display a custom message within a confirmation screen in MetaMask.',
-            button: (
-              <SendHelloButton
-                onClick={handleSaveDid}
-                disabled={!state.installedSnap}
-              />
-            ),
+            button: AnyButton('Load sample dids', {
+              onClick: handleSaveDid,
+              disabled: !state.installedSnap,
+            }),
           }}
           disabled={!state.installedSnap}
           fullWidth={
@@ -358,12 +355,10 @@ const Index = () => {
             title: 'Clear dids',
             description:
               'Display a custom message within a confirmation screen in MetaMask.',
-            button: (
-              <SendHelloButton
-                onClick={handleClearDids}
-                disabled={!state.installedSnap}
-              />
-            ),
+            button: AnyButton('Clear dids', {
+              onClick: handleClearDids,
+              disabled: !state.installedSnap,
+            }),
           }}
           disabled={!state.installedSnap}
           fullWidth={

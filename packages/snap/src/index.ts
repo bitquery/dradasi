@@ -90,6 +90,7 @@ const saveDid = async (params: Json[]) => {
  * @throws If the request method is not valid for this snap.
  */
 export const onRpcRequest: OnRpcRequestHandler = ({ origin, request }) => {
+  console.log(request.method);
   switch (request.method) {
     case 'hello':
       return snap.request({

@@ -55,9 +55,50 @@ export const getSnap = async (version?: string): Promise<Snap | undefined> => {
  */
 
 export const sendHello = async () => {
-  await window.ethereum.request({
+  const x = await window.ethereum.request({
     method: 'wallet_invokeSnap',
     params: { snapId: defaultSnapOrigin, request: { method: 'hello' } },
+  });
+  console.log(x);
+};
+
+/**
+ * Invoke the "getDids" method from the example snap.
+ */
+export const getDids = async () => {
+  return await window.ethereum.request({
+    method: 'wallet_invokeSnap',
+    params: { snapId: defaultSnapOrigin, request: { method: 'getDids' } },
+  });
+};
+
+/**
+ * Invoke the "saveDid" method from the example snap.
+ *
+ * @param did
+ */
+export const saveDid = async (did: any) => {
+  return await window.ethereum.request({
+    method: 'wallet_invokeSnap',
+    params: {
+      snapId: defaultSnapOrigin,
+      request: { method: 'saveDid', params: [did] },
+    },
+  });
+};
+
+/**
+ * Invoke the "saveDid" method from the example snap.
+ *
+ * @param did
+ */
+export const clearDids = async () => {
+  await window.ethereum.request({
+    method: 'wallet_invokeSnap',
+    params: {
+      snapId: defaultSnapOrigin,
+      request: { method: 'clearDids' },
+    },
   });
 };
 

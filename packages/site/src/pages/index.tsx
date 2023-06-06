@@ -1,10 +1,12 @@
-import { useContext } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { MetamaskActions, MetaMaskContext } from '../hooks';
 import {
+  clearDids,
   connectSnap,
+  getDids,
   getSnap,
-  sendHello,
+  saveDid,
   shouldDisplayReconnectButton,
 } from '../utils';
 import {
@@ -14,6 +16,7 @@ import {
   SendHelloButton,
   Card,
 } from '../components';
+import { DidList } from '../components/DidItem';
 
 const Container = styled.div`
   display: flex;
@@ -101,6 +104,18 @@ const ErrorMessage = styled.div`
 
 const Index = () => {
   const [state, dispatch] = useContext(MetaMaskContext);
+  const [dids, setDids] = useState<unknown[]>([]);
+  const [selectedDid, setSelectedDid] = useState<unknown>(null);
+
+  useEffect(() => {
+    (async () => {
+      if (state.installedSnap) {
+        const loadedDids = (await getDids()) as Record<'dids', unknown[]>;
+        setDids(loadedDids?.dids);
+        console.log(dids);
+      }
+    })();
+  }, [state.installedSnap]);
 
   const handleConnectClick = async () => {
     try {
@@ -117,9 +132,21 @@ const Index = () => {
     }
   };
 
-  const handleSendHelloClick = async () => {
+  const handleSaveDid = async () => {
     try {
-      await sendHello();
+      const b = { x: 'did' };
+      const newDids = (await saveDid(b)) as Record<'dids', unknown[]>;
+      setDids(newDids.dids);
+    } catch (e) {
+      console.error(e);
+      dispatch({ type: MetamaskActions.SetError, payload: e });
+    }
+  };
+
+  const handleClearDids = async () => {
+    try {
+      await clearDids();
+      setDids([]);
     } catch (e) {
       console.error(e);
       dispatch({ type: MetamaskActions.SetError, payload: e });
@@ -185,12 +212,12 @@ const Index = () => {
         )}
         <Card
           content={{
-            title: 'Send Hello message',
+            title: 'Load sample dids',
             description:
               'Display a custom message within a confirmation screen in MetaMask.',
             button: (
               <SendHelloButton
-                onClick={handleSendHelloClick}
+                onClick={handleSaveDid}
                 disabled={!state.installedSnap}
               />
             ),
@@ -202,6 +229,30 @@ const Index = () => {
             !shouldDisplayReconnectButton(state.installedSnap)
           }
         />
+        <Card
+          content={{
+            title: 'Clear dids',
+            description:
+              'Display a custom message within a confirmation screen in MetaMask.',
+            button: (
+              <SendHelloButton
+                onClick={handleClearDids}
+                disabled={!state.installedSnap}
+              />
+            ),
+          }}
+          disabled={!state.installedSnap}
+          fullWidth={
+            state.isFlask &&
+            Boolean(state.installedSnap) &&
+            !shouldDisplayReconnectButton(state.installedSnap)
+          }
+        />
+        {dids ? (
+          <DidList dids={dids} callback={setSelectedDid} />
+        ) : (
+          <p>No DIDs found</p>
+        )}
         <Notice>
           <p>
             Please note that the <b>snap.manifest.json</b> and{' '}

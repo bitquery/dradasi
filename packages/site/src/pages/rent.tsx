@@ -7,6 +7,7 @@ import { getDid } from '../utils/snap';
 import { generateRandomBigInt } from '../utils/nft';
 import { signAndVerify } from '../utils/signAndVerify';
 import { callContractMethod } from '../utils';
+import { Logo } from '../components';
 
 const Rent = () => {
   const [state, dispatch] = useContext(MetaMaskContext);
@@ -18,88 +19,95 @@ const Rent = () => {
    *
    */
   const handleRent = async () => {
-    if (!state.installedSnap) {
+    try {
+      if (!state.installedSnap) {
+        dispatch({
+          type: MetamaskActions.SetError,
+          payload: 'Snap not installed.',
+        });
+        return;
+      }
+      const did = (await getDid(state.accounts[0])) as string;
+
+      if (!did) {
+        dispatch({
+          type: MetamaskActions.SetError,
+          payload: 'DID not provided',
+        });
+        return;
+      }
+      const providerConfig = {
+        networks: [
+          {
+            name: 'mainnet',
+            rpcUrl:
+              'https://mainnet.infura.io/v3/997db0785ce14d3ebb8f379c4e4acf6b',
+            // registry: '0xdca7ef03e98e0dc2b855be647c39abe984fcf21b',
+          },
+          {
+            name: '0x5',
+            rpcUrl:
+              'https://goerli.infura.io/v3/997db0785ce14d3ebb8f379c4e4acf6b',
+          },
+        ],
+      };
+
+      const resolver = new Resolver(getResolver(providerConfig));
+      // const doc = await resolver.resolve(`did:ethr:${address}`);
+      // const verifiedVC = await verifyCredential(vcJwt, resolver);
+      const verifiedVP = await verifyPresentation(did, resolver);
+      console.log(verifiedVP.verified);
+      console.log(verifiedVP);
+
+      const credentialId: string | undefined =
+        verifiedVP.verifiablePresentation.verifiableCredential?.[0]
+          .credentialSubject.id;
+
+      if (!credentialId) {
+        dispatch({
+          type: MetamaskActions.SetError,
+          payload: 'There is no credentialId in the provided DID',
+        });
+        return;
+      }
+
+      const regex = /^did:ethr:(\w+)$/u; // Regular expression to match the desired format
+      const match = credentialId.match(regex);
+
+      // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
+      if (match && match[1]) {
+        console.log(match[1]); // Output: 0xF1232F840f3aD7d23FcDaA84d6C66dac24EFb198
+      } else {
+        dispatch({
+          type: MetamaskActions.SetError,
+          payload: 'did:ethr:0x.. format is not valid',
+        });
+        return;
+      }
+
+      const addr = match[1];
+      const message = 'Random message';
+      const ok = await signAndVerify(addr, message);
+      if (!ok) {
+        dispatch({
+          type: MetamaskActions.SetError,
+          payload: 'Address verification failed',
+        });
+        return;
+      }
+      console.log('Congrats, address verified!');
+      dispatch({ type: MetamaskActions.SetAddressVerified, payload: true });
+
+      const randomBigInt = generateRandomBigInt(256); // Generate a random 256-bit BigInt
+      const result = await callContractMethod(randomBigInt);
+      console.log(result);
+      setNotification('Car rented');
+    } catch (e) {
       dispatch({
         type: MetamaskActions.SetError,
-        payload: 'Snap not installed.',
+        payload: e,
       });
-      return;
     }
-    const did = (await getDid(state.accounts[0])) as string;
-
-    if (!did) {
-      dispatch({
-        type: MetamaskActions.SetError,
-        payload: 'DID not provided',
-      });
-      return;
-    }
-    const providerConfig = {
-      networks: [
-        {
-          name: 'mainnet',
-          rpcUrl:
-            'https://mainnet.infura.io/v3/997db0785ce14d3ebb8f379c4e4acf6b',
-          // registry: '0xdca7ef03e98e0dc2b855be647c39abe984fcf21b',
-        },
-        {
-          name: '0x5',
-          rpcUrl:
-            'https://goerli.infura.io/v3/997db0785ce14d3ebb8f379c4e4acf6b',
-        },
-      ],
-    };
-
-    const resolver = new Resolver(getResolver(providerConfig));
-    // const doc = await resolver.resolve(`did:ethr:${address}`);
-    // const verifiedVC = await verifyCredential(vcJwt, resolver);
-    const verifiedVP = await verifyPresentation(did, resolver);
-    console.log(verifiedVP.verified);
-    console.log(verifiedVP);
-
-    const credentialId: string | undefined =
-      verifiedVP.verifiablePresentation.verifiableCredential?.[0]
-        .credentialSubject.id;
-
-    if (!credentialId) {
-      dispatch({
-        type: MetamaskActions.SetError,
-        payload: 'There is no credentialId in the provided DID',
-      });
-      return;
-    }
-
-    const regex = /^did:ethr:(\w+)$/u; // Regular expression to match the desired format
-    const match = credentialId.match(regex);
-
-    // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
-    if (match && match[1]) {
-      console.log(match[1]); // Output: 0xF1232F840f3aD7d23FcDaA84d6C66dac24EFb198
-    } else {
-      dispatch({
-        type: MetamaskActions.SetError,
-        payload: 'did:ethr:0x.. format is not valid',
-      });
-      return;
-    }
-
-    const addr = match[1];
-    const message = 'Random message';
-    const ok = await signAndVerify(addr, message);
-    if (!ok) {
-      dispatch({
-        type: MetamaskActions.SetError,
-        payload: 'Address verification failed',
-      });
-      return;
-    }
-    console.log('Congrats, address verified!');
-    dispatch({ type: MetamaskActions.SetAddressVerified, payload: true });
-
-    const randomBigInt = generateRandomBigInt(256); // Generate a random 256-bit BigInt
-    const result = await callContractMethod(randomBigInt);
-    console.log(result);
-    setNotification('Car rented');
   };
 
   return (
@@ -128,13 +136,7 @@ const Rent = () => {
                 className="list-group-item list-group-item-action d-flex gap-3 py-3"
                 aria-current="true"
               >
-                <img
-                  src="./icon.png"
-                  alt="twbs"
-                  width="64"
-                  height="64"
-                  className="rounded-circle flex-shrink-0"
-                />
+                <Logo size={64} />
                 <div className="d-flex gap-2 w-100 justify-content-between">
                   <div>
                     <h3 className="mb-0">

@@ -22,6 +22,7 @@ export type MetamaskState = {
   hasProvider: boolean;
   connecting: boolean;
   connectMetamask: () => Promise<void>;
+  addressVerified: boolean;
 };
 
 const initialState: MetamaskState = {
@@ -34,6 +35,7 @@ const initialState: MetamaskState = {
   hasProvider: false,
   connecting: false,
   connectMetamask: async () => {},
+  addressVerified: false,
 };
 
 type MetamaskDispatch = { type: MetamaskActions; payload: any };
@@ -57,6 +59,7 @@ export enum MetamaskActions {
   SetNetwork = 'SetNetwork',
   SetConnecting = 'SetConnecting',
   SetIsConnected = 'SetIsConnected',
+  SetAddressVerified = 'SetAddressVerified',
 }
 
 const reducer: Reducer<MetamaskState, MetamaskDispatch> = (state, action) => {
@@ -107,6 +110,12 @@ const reducer: Reducer<MetamaskState, MetamaskDispatch> = (state, action) => {
       return {
         ...state,
         connecting: action.payload,
+      };
+
+    case MetamaskActions.SetAddressVerified:
+      return {
+        ...state,
+        addressVerified: action.payload,
       };
 
     default:

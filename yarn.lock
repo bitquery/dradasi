@@ -15741,6 +15741,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ^5.33.0
     "@typescript-eslint/parser": ^5.33.0
     cross-env: ^7.0.3
+    did-jwt-vc: ^3.2.2
     eslint: ^8.21.0
     eslint-config-prettier: ^8.1.0
     eslint-plugin-import: ^2.26.0
@@ -15748,6 +15749,8 @@ __metadata:
     eslint-plugin-jsdoc: ^39.2.9
     eslint-plugin-node: ^11.1.0
     eslint-plugin-prettier: ^4.2.1
+    ethers: 5.7.2
+    ethr-did: ^2.3.13
     gatsby: ^4.24.4
     gatsby-plugin-manifest: ^4.24.0
     gatsby-plugin-styled-components: ^5.24.0

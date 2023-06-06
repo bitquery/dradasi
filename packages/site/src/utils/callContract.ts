@@ -23,9 +23,7 @@ async function connectAndCreateContract() {
   return contract;
 }
 
-export async function callContractMethod(
-  id: bigint | undefined,
-) {
+export async function callContractMethod(id: bigint | undefined) {
   if (!id) {
     throw new Error('id is undefined');
   }

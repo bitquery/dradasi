@@ -7,10 +7,10 @@ import {
   useEffect,
   useReducer,
 } from 'react';
-import detectEthereumProvider from '@metamask/detect-provider';
 import { Snap } from '../types';
 import { isFlask, getSnap } from '../utils';
-import { signAndVerify } from '../utils/signAndVerify';
+import { ethers } from 'ethers';
+import detectEthereumProvider from '@metamask/detect-provider';
 
 export type MetamaskState = {
   isFlask: boolean;
@@ -20,10 +20,10 @@ export type MetamaskState = {
   nftID?: bigint;
   accounts: any[];
   chainID: number;
-  hasProvider: boolean;
   connecting: boolean;
   connectMetamask: () => Promise<void>;
   addressVerified: { [key: string]: boolean };
+  provider?: ethers.providers.Web3Provider;
 };
 
 const initialState: MetamaskState = {
@@ -33,7 +33,6 @@ const initialState: MetamaskState = {
   nftID: undefined,
   accounts: [],
   chainID: 0,
-  hasProvider: false,
   connecting: false,
   connectMetamask: async () => {},
   addressVerified: {},
@@ -55,7 +54,7 @@ export enum MetamaskActions {
   SetFlaskDetected = 'SetFlaskDetected',
   SetError = 'SetError',
   SetNFTID = 'SetNFTID',
-  SetHasProvider = 'SetHasProvider',
+  SetProvider = 'SetProvider',
   SetAccounts = 'SetAccounts',
   SetNetwork = 'SetNetwork',
   SetConnecting = 'SetConnecting',
@@ -101,12 +100,6 @@ const reducer: Reducer<MetamaskState, MetamaskDispatch> = (state, action) => {
         chainID: action.payload,
       };
 
-    case MetamaskActions.SetHasProvider:
-      return {
-        ...state,
-        hasProvider: action.payload,
-      };
-
     case MetamaskActions.SetConnecting:
       return {
         ...state,
@@ -117,6 +110,12 @@ const reducer: Reducer<MetamaskState, MetamaskDispatch> = (state, action) => {
       return {
         ...state,
         addressVerified: { ...state.addressVerified, ...action.payload },
+      };
+
+    case MetamaskActions.SetProvider:
+      return {
+        ...state,
+        provider: action.payload,
       };
 
     default:
@@ -183,8 +182,8 @@ export const MetaMaskProvider = ({ children }: { children: ReactNode }) => {
       const provider = await detectEthereumProvider({ silent: true });
 
       dispatch({
-        type: MetamaskActions.SetHasProvider,
-        payload: Boolean(provider),
+        type: MetamaskActions.SetProvider,
+        payload: provider,
       });
 
       if (provider) {

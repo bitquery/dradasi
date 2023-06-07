@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
@@ -12,21 +12,18 @@ import "@openzeppelin/contracts/utils/Counters.sol";
    * @custom:dev-run-script RentalNFT.sol
    */
 
-contract RentalNFT is ERC1155, Ownable  {
+contract RentalNFT is ERC721, Ownable  {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
 
-    constructor() ERC1155("Rental Token v1") {}
+    constructor() ERC721("DRADASI Token v1", "DRADASI") {}
 
-
-    function mint(address account, uint256 id,  bytes memory data)
+    function mint(address account,  uint256 id)
         public
         onlyOwner returns (uint256)
     {
-        _tokenIds.increment();
-        uint256 newItemId = _tokenIds.current();
-        _mint(account, id, 1, data);
-        return newItemId;
+        _mint(account, id);
+        return id;
 
     }
 

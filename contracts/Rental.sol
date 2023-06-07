@@ -12,20 +12,18 @@ import "hardhat/console.sol";
  */
 
 interface RentalContract {
-    function mint(address, uint256, bytes memory) external;
+    function mint(address, uint256) external;
 }
 
 contract Rental {
 
     // State Variables
     address public immutable owner;
-    address internal rentalContractAddress = 0x29401915801E91D1a2345973924321bFeB58a300;
+    address internal rentalContractAddress = 0x01c7D139dA74f5655CF9bDDc58e6fE5d96770C90;
     RentalContract rentalContract = RentalContract(rentalContractAddress);
     address payable public Sender;
 
-
-    
-
+ 
 
     // Constructor: Called once on contract deployment
     // Check packages/hardhat/deploy/00_deploy_your_contract.ts
@@ -51,10 +49,12 @@ contract Rental {
         require(success, "Failed to send Ether");
     }
  
-    function rental( uint256 id, bytes memory data )  public payable{
+    function rental( uint256 id )  public payable{
         require(msg.value == 1 , "Not exact 1 wei value");
-        rentalContract.mint( msg.sender , id, data);
+        rentalContract.mint( msg.sender , id);
     } 
+// cli for execute rental method 
+
 
     /**
      * Function that allows the contract to receive ETH
